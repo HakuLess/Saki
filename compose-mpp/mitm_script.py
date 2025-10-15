@@ -95,6 +95,7 @@ def response(flow):
         if flow.response and flow.response.content:
             # 将响应内容保存到文件中
             try:
+                import os
                 # 创建一个简单的消息对象
                 message_data = {
                     "host": flow.request.pretty_host,
@@ -102,8 +103,10 @@ def response(flow):
                     "content": flow.response.content.decode('utf-8', errors='ignore')
                 }
                 
+                # 使用绝对路径保存文件
+                file_path = os.path.join("D:\\WorkSpace\\Saki\\compose-mpp", "mitm_messages.json")
                 # 将消息追加到文件中
-                with open("mitm_messages.json", "a", encoding="utf-8") as f:
+                with open(file_path, "a", encoding="utf-8") as f:
                     f.write(json.dumps(message_data, ensure_ascii=False) + "\n")
                     
             except Exception as e:
@@ -125,6 +128,7 @@ def request(flow):
         # 如果有请求内容，保存它
         if flow.request.content:
             try:
+                import os
                 # 创建一个简单的消息对象
                 message_data = {
                     "host": flow.request.pretty_host,
@@ -133,8 +137,10 @@ def request(flow):
                     "content": flow.request.content.decode('utf-8', errors='ignore')
                 }
                 
+                # 使用绝对路径保存文件
+                file_path = os.path.join("D:\\WorkSpace\\Saki\\compose-mpp", "mitm_messages.json")
                 # 将消息追加到文件中
-                with open("mitm_messages.json", "a", encoding="utf-8") as f:
+                with open(file_path, "a", encoding="utf-8") as f:
                     f.write(json.dumps(message_data, ensure_ascii=False) + "\n")
                     
             except Exception as e:
@@ -296,9 +302,11 @@ def parse_varint(buf: bytes, p: int) -> tuple:
 def save_message(message_data: dict):
     """保存消息到文件"""
     try:
-        with open("mitm_messages.json", "a", encoding="utf-8") as f:
-            f.write(json.dumps(message_data, ensure_ascii=False) + "
-")
+        import os
+        # 使用绝对路径保存文件
+        file_path = os.path.join("D:\\WorkSpace\\Saki\\compose-mpp", "mitm_messages.json")
+        with open(file_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(message_data, ensure_ascii=False) + "\n")
     except Exception as e:
         print(f"保存消息错误: {e}")
 

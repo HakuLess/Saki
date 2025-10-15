@@ -21,15 +21,17 @@ import mahjongcopilot.platform.MitmNetworkInterceptor
 fun MahjongCopilotApp() {
     // 创建仓库实例
     val networkInterceptor = remember { MitmNetworkInterceptor() } // 使用Windows平台的网络拦截器
-    val protocolParser = remember { ProtocolParserRepositoryImpl() }
     val gameStateRepository = remember { GameStateRepositoryImpl() }
     
     // 创建服务实例
-    val gameManager = remember { 
-        GameManagerServiceImpl(networkInterceptor, protocolParser, gameStateRepository) 
-    }
     val networkManager = remember { 
         NetworkManagerServiceImpl(networkInterceptor) 
+    }
+    val gameStateManager = remember {
+        GameStateManagerServiceImpl(gameStateRepository)
+    }
+    val gameManager = remember { 
+        GameManagerServiceImpl(networkManager, gameStateManager, gameStateRepository) 
     }
     val aiDecisionService = remember { AiDecisionServiceImpl() }
     val aiModelService = remember { AiModelServiceImpl() }

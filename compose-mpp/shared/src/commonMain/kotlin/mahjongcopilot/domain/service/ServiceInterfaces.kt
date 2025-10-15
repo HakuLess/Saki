@@ -203,6 +203,31 @@ interface AutomationService {
 }
 
 /**
+ * 游戏状态管理器服务接口
+ */
+interface GameStateManagerService {
+    /**
+     * 更新游戏状态
+     */
+    suspend fun updateGameState(message: LiqiMessage): Result<Unit>
+    
+    /**
+     * 监听游戏状态变化
+     */
+    fun observeGameState(): kotlinx.coroutines.flow.Flow<GameState?>
+    
+    /**
+     * 获取当前游戏状态
+     */
+    suspend fun getCurrentGameState(): GameState?
+    
+    /**
+     * 重置游戏状态
+     */
+    suspend fun resetGameState(): Result<Unit>
+}
+
+/**
  * 网络管理服务接口
  */
 interface NetworkManagerService {

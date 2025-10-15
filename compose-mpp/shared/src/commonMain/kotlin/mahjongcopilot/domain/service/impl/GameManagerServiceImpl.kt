@@ -2,18 +2,26 @@ package mahjongcopilot.domain.service.impl
 
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import mahjongcopilot.data.model.*
-import mahjongcopilot.domain.repository.*
-import mahjongcopilot.domain.service.GameManagerService
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import mahjongcopilot.data.model.*
+import mahjongcopilot.domain.service.GameManagerService
+import mahjongcopilot.domain.service.NetworkManagerService
+import mahjongcopilot.domain.service.GameStateManagerService
+import mahjongcopilot.domain.repository.GameStateRepository
+import mahjongcopilot.platform.WindowsNetworkManagerServiceImpl
 
 /**
  * 游戏管理服务实现
  */
+/**
+ * 游戏管理服务实现
+ * 负责管理游戏的整体状态，包括网络拦截、游戏状态管理等
+ * 根据游戏进程状态决定是否启动网络拦截
+ */
 class GameManagerServiceImpl(
-    private val networkInterceptor: NetworkInterceptorRepository,
-    private val protocolParser: ProtocolParserRepository,
+    private val networkManager: NetworkManagerService,
+    private val gameStateManager: GameStateManagerService,
     private val gameStateRepository: GameStateRepository
 ) : GameManagerService {
     
@@ -62,7 +70,7 @@ class GameManagerServiceImpl(
                 
                 // 停止网络拦截
                 try {
-                    val stopResult = networkInterceptor.stopInterception()
+                    val stopResult = networkManager.stopNetworkInterception()
                     if (stopResult.isFailure) {
                         println("Warning: Failed to stop network interception: ${stopResult.exceptionOrNull()?.message}")
                     } else {
@@ -122,47 +130,128 @@ class GameManagerServiceImpl(
         try {
             println("Starting game loop...")
             
-            // 启动网络拦截
-            println("Starting network interception...")
-            val networkResult = networkInterceptor.startInterception(
-                NetworkSettings()
-            )
+            // 检查是否为Windows平台且有进程监控功能
+            val isWindowsPlatform = System.getProperty("os.name").lowercase().contains("windows")
+            var isGameProcessRunning = false
+            var currentNetworkStatus = NetworkStatus.DISCONNECTED
             
-            if (networkResult.isFailure) {
-                val errorMsg = "Failed to start network interception: ${networkResult.exceptionOrNull()?.message}"
-                println(errorMsg)
-                // 提供更友好的错误信息
-                val userFriendlyError = if (errorMsg.contains("mitmdump")) {
-                    "网络拦截启动失败：请确保已安装mitmproxy并添加到系统PATH中。参考README_mitmproxy.md获取安装说明。"
-                } else {
-                    errorMsg
+            if (isWindowsPlatform && networkManager is WindowsNetworkManagerServiceImpl) {
+                // 在协程作用域内启动监听
+                coroutineScope {
+                    // 监听游戏进程状态
+                    launch {
+                        networkManager.observeGameProcessStatus().collect { processRunning ->
+                            isGameProcessRunning = processRunning
+                            println("Game process status: $processRunning")
+                            
+                            if (processRunning && currentNetworkStatus != NetworkStatus.CONNECTED) {
+                                // 游戏进程运行且网络未连接，启动网络拦截
+                                println("Game process detected, starting network interception...")
+                                val networkResult = networkManager.startNetworkInterception()
+                                
+                                if (networkResult.isFailure) {
+                                    val errorMsg = "Failed to start network interception: ${networkResult.exceptionOrNull()?.message}"
+                                    println(errorMsg)
+                                    // 提供更友好的错误信息
+                                    val userFriendlyError = if (errorMsg.contains("mitmdump")) {
+                                        "网络拦截启动失败：请确保已安装mitmproxy并添加到系统PATH中。参考README_mitmproxy.md获取安装说明。"
+                                    } else {
+                                        errorMsg
+                                    }
+                                    _appState.value = _appState.value.copy(
+                                        errorMessage = userFriendlyError
+                                    )
+                                    return@collect
+                                }
+                                
+                                println("Network interception started successfully")
+                                
+                                // 更新应用状态
+                                _appState.value = _appState.value.copy(
+                                    isConnected = true,
+                                    errorMessage = null
+                                )
+                            } else if (!processRunning && currentNetworkStatus == NetworkStatus.CONNECTED) {
+                                // 游戏进程未运行且网络已连接，停止网络拦截
+                                println("Game process not detected, stopping network interception...")
+                                val stopResult = networkManager.stopNetworkInterception()
+                                
+                                if (stopResult.isFailure) {
+                                    println("Warning: Failed to stop network interception: ${stopResult.exceptionOrNull()?.message}")
+                                } else {
+                                    println("Network interception stopped successfully")
+                                }
+                                
+                                // 更新应用状态
+                                _appState.value = _appState.value.copy(
+                                    isConnected = false,
+                                    errorMessage = null
+                                )
+                            }
+                        }
+                    }
+                    
+                    // 监听网络状态
+                    launch {
+                        networkManager.observeNetworkStatus().collect { status ->
+                            currentNetworkStatus = status
+                            println("Network status updated: $status")
+                        }
+                    }
+                    
+                    // 监听网络消息
+                    launch {
+                        (networkManager as WindowsNetworkManagerServiceImpl).capturedMessages
+                            .catch { e ->
+                                val errorMsg = "Network error: ${e.message}"
+                                println(errorMsg)
+                                _appState.value = _appState.value.copy(
+                                    errorMessage = errorMsg
+                                )
+                            }
+                            .collect { message ->
+                                processNetworkMessage(message)
+                            }
+                    }
                 }
-                _appState.value = _appState.value.copy(
-                    errorMessage = userFriendlyError
-                )
-                return
-            }
-            
-            println("Network interception started successfully")
-            
-            // 更新应用状态
-            _appState.value = _appState.value.copy(
-                isConnected = true,
-                errorMessage = null
-            )
-            
-            // 监听网络消息
-            networkInterceptor.observeNetworkMessages()
-                .catch { e ->
-                    val errorMsg = "Network error: ${e.message}"
+            } else {
+                // 非Windows平台或无进程监控功能，直接启动网络拦截
+                println("Starting network interception...")
+                val networkResult = networkManager.startNetworkInterception()
+                
+                if (networkResult.isFailure) {
+                    val errorMsg = "Failed to start network interception: ${networkResult.exceptionOrNull()?.message}"
                     println(errorMsg)
+                    // 提供更友好的错误信息
+                    val userFriendlyError = if (errorMsg.contains("mitmdump")) {
+                        "网络拦截启动失败：请确保已安装mitmproxy并添加到系统PATH中。参考README_mitmproxy.md获取安装说明。"
+                    } else {
+                        errorMsg
+                    }
                     _appState.value = _appState.value.copy(
-                        errorMessage = errorMsg
+                        errorMessage = userFriendlyError
                     )
+                    return
                 }
-                .collect { liqiMessage ->
-                    processNetworkMessage(liqiMessage)
+                
+                println("Network interception started successfully")
+                
+                // 更新应用状态
+                _appState.value = _appState.value.copy(
+                    isConnected = true,
+                    errorMessage = null
+                )
+                
+                // 在协程作用域内监听网络状态
+                coroutineScope {
+                    launch {
+                        networkManager.observeNetworkStatus().collect { status ->
+                            currentNetworkStatus = status
+                            println("Network status updated: $status")
+                        }
+                    }
                 }
+            }
                 
         } catch (e: Exception) {
             val errorMsg = "Game manager error: ${e.message}"
@@ -177,15 +266,16 @@ class GameManagerServiceImpl(
     /**
      * 处理网络消息
      */
-    private suspend fun processNetworkMessage(liqiMessage: LiqiMessage) {
+    private suspend fun processNetworkMessage(message: LiqiMessage) {
         try {
-            println("Processing network message: method=${liqiMessage.method}")
+            println("Processing network message: ${message.method}")
             
             // 更新游戏状态
-            val gameStateResult = gameStateRepository.updateGameState(liqiMessage)
+            val gameStateResult = gameStateManager.updateGameState(message)
             
             if (gameStateResult.isSuccess) {
-                val gameState = gameStateResult.getOrNull()
+                // 获取当前游戏状态
+                val gameState = gameStateRepository.getCurrentGameState()
                 _appState.value = _appState.value.copy(
                     isInGame = gameState?.isGameActive == true,
                     currentGame = gameState,

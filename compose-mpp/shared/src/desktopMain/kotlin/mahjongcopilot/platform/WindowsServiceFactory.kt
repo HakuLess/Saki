@@ -24,9 +24,10 @@ object WindowsServiceFactory {
      */
     fun createGameManagerService(): GameManagerService {
         val networkInterceptor = MitmNetworkInterceptor()
-        val protocolParser = ProtocolParserRepositoryImpl()
+        val networkManager = NetworkManagerServiceImpl(networkInterceptor)
         val gameStateRepository = GameStateRepositoryImpl()
-        return GameManagerServiceImpl(networkInterceptor, protocolParser, gameStateRepository)
+        val gameStateManager = GameStateManagerServiceImpl(gameStateRepository)
+        return GameManagerServiceImpl(networkManager, gameStateManager, gameStateRepository)
     }
     
     /**

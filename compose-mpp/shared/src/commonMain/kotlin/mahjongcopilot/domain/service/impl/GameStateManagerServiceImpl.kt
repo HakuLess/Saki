@@ -5,17 +5,18 @@ import mahjongcopilot.data.model.*
 import mahjongcopilot.data.model.enums.*
 import mahjongcopilot.domain.repository.GameStateRepository
 import mahjongcopilot.domain.repository.ProtocolParserRepository
+import mahjongcopilot.domain.service.GameStateManagerService
 
 /**
  * 游戏状态管理器服务实现
  */
 class GameStateManagerServiceImpl(
     private val gameStateRepository: GameStateRepository
-) {
+) : GameStateManagerService {
     
     private val _currentGameState = MutableStateFlow<GameState?>(null)
     
-    suspend fun updateGameState(message: LiqiMessage): Result<Unit> {
+    override suspend fun updateGameState(message: LiqiMessage): Result<Unit> {
         return try {
             // 直接更新游戏状态
             val result = gameStateRepository.updateGameState(message)
@@ -31,15 +32,15 @@ class GameStateManagerServiceImpl(
         }
     }
     
-    fun observeGameState(): Flow<GameState?> {
+    override fun observeGameState(): Flow<GameState?> {
         return gameStateRepository.observeGameState()
     }
     
-    suspend fun getCurrentGameState(): GameState? {
+    override suspend fun getCurrentGameState(): GameState? {
         return gameStateRepository.getCurrentGameState()
     }
     
-    suspend fun resetGameState(): Result<Unit> {
+    override suspend fun resetGameState(): Result<Unit> {
         return try {
             _currentGameState.value = null
             Result.success(Unit)
