@@ -17,6 +17,17 @@ kotlin {
     }
 }
 
+// 添加任务将mitm_script.py复制到输出目录
+tasks.register<Copy>("copyMitmScript") {
+    from(rootProject.file("mitm_script.py"))
+    into(layout.buildDirectory.dir("libs"))
+}
+
+// 确保在构建应用之前复制脚本
+tasks.named("build") {
+    dependsOn("copyMitmScript")
+}
+
 compose.desktop {
     application {
         mainClass = "MainKt"

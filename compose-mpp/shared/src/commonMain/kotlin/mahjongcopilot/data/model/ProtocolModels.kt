@@ -21,7 +21,9 @@ enum class MjaiMessageType {
     END_KYOKU,
     END_GAME,
     NONE,
-    NUKIDORA
+    NUKIDORA,
+    CONNECTED,    // 连接建立
+    DISCONNECTED  // 连接断开
 }
 
 /**
@@ -83,7 +85,9 @@ data class MjaiAction(
 enum class LiqiMessageType {
     REQ,    // 请求
     RES,    // 响应
-    NOTIFY  // 通知
+    NOTIFY, // 通知
+    WEBSOCKET_START, // WebSocket连接开始
+    WEBSOCKET_END    // WebSocket连接结束
 }
 
 /**

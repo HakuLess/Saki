@@ -14,10 +14,13 @@ import mahjongcopilot.data.repository.*
 import mahjongcopilot.domain.service.impl.*
 import kotlinx.coroutines.launch
 
+// 添加对Windows平台网络拦截器的引用
+import mahjongcopilot.platform.MitmNetworkInterceptor
+
 @Composable
 fun MahjongCopilotApp() {
     // 创建仓库实例
-    val networkInterceptor = remember { NetworkInterceptorRepositoryImpl() }
+    val networkInterceptor = remember { MitmNetworkInterceptor() } // 使用Windows平台的网络拦截器
     val protocolParser = remember { ProtocolParserRepositoryImpl() }
     val gameStateRepository = remember { GameStateRepositoryImpl() }
     
@@ -36,6 +39,7 @@ fun MahjongCopilotApp() {
     var appState by remember { mutableStateOf(AppState()) }
     var settings by remember { mutableStateOf(getDefaultSettings()) }
     var logs by remember { mutableStateOf<List<LogEntry>>(emptyList()) }
+    var networkLogs by remember { mutableStateOf<List<String>>(emptyList()) } // 网络日志
     
     val scope = rememberCoroutineScope()
     
@@ -53,7 +57,7 @@ fun MahjongCopilotApp() {
     
     // 监听游戏状态变化，自动获取 AI 决策
     LaunchedEffect(gameManager) {
-        gameManager.observeGameState().collect { gameState ->
+        gameManager.observeGameState().collect { gameState ->  
             if (gameState != null && gameState.isGameActive) {
                 scope.launch {
                     val result = aiDecisionService.getDecision(gameState)
@@ -198,7 +202,10 @@ fun MahjongCopilotApp() {
         // AI 决策面板
         AiDecisionPanel(decision = appState.lastDecision)
         
-        // 日志面板
+        // 网络拦截日志面板
+        NetworkLogPanel(logs = networkLogs)
+        
+        // 应用日志面板
         LogPanel(logs = logs)
     }
 }
@@ -236,11 +243,27 @@ fun StatusPanel(appState: AppState) {
             }
             
             if (appState.errorMessage != null) {
+                // 显示更详细的错误信息
+                val displayError = if (appState.errorMessage.contains("mitmdump")) {
+                    "网络拦截启动失败：请确保已安装mitmproxy并添加到系统PATH中"
+                } else {
+                    appState.errorMessage
+                }
+                
                 Text(
-                    text = "错误: ${appState.errorMessage}",
+                    text = "错误: $displayError",
                     color = MaterialTheme.colorScheme.error,
                     style = MaterialTheme.typography.bodySmall
                 )
+                
+                // 添加帮助信息
+                if (appState.errorMessage.contains("mitmdump")) {
+                    Text(
+                        text = "提示：请参考 README_mitmproxy.md 文件了解安装和配置说明",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
             }
         }
     }
@@ -445,7 +468,7 @@ fun LogPanel(logs: List<LogEntry>) {
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             Text(
-                text = "日志",
+                text = "应用日志",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold
             )
@@ -463,6 +486,38 @@ fun LogPanel(logs: List<LogEntry>) {
                             LogLevel.WARN -> MaterialTheme.colorScheme.tertiary
                             else -> MaterialTheme.colorScheme.onSurface
                         }
+                    )
+                }
+            }
+        }
+    }
+}
+
+// 网络拦截日志面板
+@Composable
+fun NetworkLogPanel(logs: List<String>) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "网络拦截日志",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold
+            )
+            
+            LazyColumn(
+                modifier = Modifier.height(150.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(logs.takeLast(30)) { log -> // 只显示最近30条日志
+                    Text(
+                        text = log,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
                 }
             }
