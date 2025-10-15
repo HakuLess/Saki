@@ -82,7 +82,7 @@ class NetworkInterceptorRepositoryImpl : NetworkInterceptorRepository {
             method = LiqiMethod.AUTH_GAME,
             data = mapOf(
                 "gameId" to "mock_game_${System.currentTimeMillis()}",
-                "timestamp" to System.currentTimeMillis()
+                "timestamp" to System.currentTimeMillis().toString()
             )
         )
         _messages.emit(startGameMessage)
@@ -113,8 +113,8 @@ class NetworkInterceptorRepositoryImpl : NetworkInterceptorRepository {
             type = randomType,
             method = randomMethod,
             data = mapOf(
-                "timestamp" to System.currentTimeMillis(),
-                "mock" to true,
+                "timestamp" to System.currentTimeMillis().toString(),
+                "mock" to true.toString(),
                 "test_data" to "This is a mock message for testing"
             )
         )

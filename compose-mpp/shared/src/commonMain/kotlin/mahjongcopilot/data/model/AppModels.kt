@@ -50,7 +50,7 @@ data class GameSettings(
  * 网络设置
  */
 data class NetworkSettings(
-    val mitmPort: Int = 10999,
+    val mitmPort: Int = 11003,
     val upstreamProxy: String? = null,
     val enableProxyInject: Boolean = false,
     val injectProcessName: String = "jantama_mahjongsoul"

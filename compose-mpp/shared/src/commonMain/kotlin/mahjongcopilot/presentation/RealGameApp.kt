@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.*
 import mahjongcopilot.data.model.*
 import mahjongcopilot.data.model.enums.*
-import mahjongcopilot.domain.service.impl.MitmNetworkManagerServiceImpl
+import mahjongcopilot.platform.WindowsNetworkManagerServiceImpl
 import mahjongcopilot.domain.service.impl.GameStateManagerServiceImpl
 import mahjongcopilot.domain.repository.GameStateRepository
 import mahjongcopilot.data.repository.ProtocolParserRepositoryImpl
@@ -25,9 +25,8 @@ import java.io.File
 @Composable
 fun RealGameApp() {
     // 创建服务实例
-    val protocolParser = remember { ProtocolParserRepositoryImpl() }
     val gameStateRepository = remember { GameStateRepositoryImpl() }
-    val networkManager = remember { MitmNetworkManagerServiceImpl(protocolParser) }
+    val networkManager = remember { WindowsNetworkManagerServiceImpl() }
     val gameStateManager = remember { GameStateManagerServiceImpl(gameStateRepository) }
     
     // 状态管理
@@ -35,6 +34,7 @@ fun RealGameApp() {
     var gameState by remember { mutableStateOf<GameState?>(null) }
     var capturedMessages by remember { mutableStateOf(0) }
     var logs by remember { mutableStateOf<List<String>>(emptyList()) }
+    var isGameProcessRunning by remember { mutableStateOf(false) }
     
     val scope = rememberCoroutineScope()
     
@@ -43,6 +43,16 @@ fun RealGameApp() {
         networkManager.observeNetworkStatus().collect { status ->
             networkStatus = status
             logs = logs + "网络状态: $status"
+        }
+    }
+    
+    // 监听游戏进程状态（仅Windows平台）
+    LaunchedEffect(networkManager) {
+        if (networkManager is WindowsNetworkManagerServiceImpl) {
+            networkManager.observeGameProcessStatus().collect { running ->
+                isGameProcessRunning = running
+                logs = logs + "游戏进程状态: ${if (running) "运行中" else "未运行"}"
+            }
         }
     }
     
@@ -84,7 +94,9 @@ fun RealGameApp() {
         RealStatusPanel(
             networkStatus = networkStatus,
             capturedMessages = capturedMessages,
-            gameState = gameState
+            gameState = gameState,
+            isGameProcessRunning = isGameProcessRunning,
+            isWindowsPlatform = networkManager is WindowsNetworkManagerServiceImpl
         )
         
         // 控制面板
@@ -117,7 +129,9 @@ fun RealGameApp() {
 fun RealStatusPanel(
     networkStatus: NetworkStatus,
     capturedMessages: Int,
-    gameState: GameState?
+    gameState: GameState?,
+    isGameProcessRunning: Boolean = false,
+    isWindowsPlatform: Boolean = false
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -158,6 +172,26 @@ fun RealStatusPanel(
                     value = if (gameState != null) "进行中" else "等待中",
                     isActive = gameState != null
                 )
+            }
+            
+            // 在Windows平台上显示游戏进程状态
+            if (isWindowsPlatform) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    StatusItem(
+                        label = "游戏进程",
+                        value = if (isGameProcessRunning) "运行中" else "未运行",
+                        isActive = isGameProcessRunning
+                    )
+                    
+                    StatusItem(
+                        label = "自动拦截",
+                        value = if (isGameProcessRunning) "已启用" else "已禁用",
+                        isActive = isGameProcessRunning
+                    )
+                }
             }
         }
     }
