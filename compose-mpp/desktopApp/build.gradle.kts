@@ -6,9 +6,9 @@ plugins {
 }
 
 kotlin {
-    jvm()
+    jvm("desktop")
     sourceSets {
-        val jvmMain by getting  {
+        val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(project(":shared"))
@@ -23,7 +23,7 @@ compose.desktop {
 
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
-            packageName = "KotlinMultiplatformComposeDesktopApplication"
+            packageName = "MahjongCopilot"
             packageVersion = "1.0.0"
         }
     }
