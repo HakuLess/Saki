@@ -87,29 +87,25 @@ enum class LiqiMessageType {
 }
 
 /**
- * Liqi 协议方法
+ * Liqi 协议方法 - 与MahjongCopilot保持一致
  */
 enum class LiqiMethod(val value: String) {
-    OAUTH2_LOGIN(".lq.Oauth2Login"),
+    HEARTBEAT(".lq.Lobby.heatbeat"),
+    LOGIN_BEAT(".lq.Lobby.loginBeat"),
+    FETCH_ACCOUNT_ACTIVITY_DATA(".lq.Lobby.fetchAccountActivityData"),
+    FETCH_SERVER_TIME(".lq.Lobby.fetchServerTime"),
+    OAUTH2_LOGIN(".lq.Lobby.oauth2Login"),
+    CHECK_NETWORK_DELAY(".lq.FastTest.checkNetworkDelay"),
+    SYNC_GAME(".lq.FastTest.syncGame"),
+    FINISH_SYNC_GAME(".lq.FastTest.finishSyncGame"),
+    ENTER_GAME(".lq.FastTest.enterGame"),
+    FETCH_GAME_PLAYER_STATE(".lq.FastTest.fetchGamePlayerState"),
     AUTH_GAME(".lq.FastTest.authGame"),
-    INPUT_OPERATION(".lq.FastTest.inputOperation"),
-    INPUT_CHI_PENG_GANG(".lq.FastTest.inputChiPengGang"),
-    CONFIRM_NEW_ROUND(".lq.FastTest.confirmNewRound"),
-    NOTIFY_GAME_BROADCAST(".lq.NotifyGameBroadcast"),
-    NOTIFY_PLAYER_LOAD_GAME_READY(".lq.NotifyPlayerLoadGameReady"),
-    CHECK_NETWORK_DELAY(".lq.checkNetworkDelay"),
-    HEARTBEAT(".lq.heartbeat"),
-    LOGIN_BEAT(".lq.loginBeat"),
-    FETCH_ACCOUNT_ACTIVITY_DATA(".lq.fetchAccountActivityData"),
-    FETCH_SERVER_TIME(".lq.fetchServerTime"),
-    TERMINATE_GAME(".lq.terminateGame"),
-    NOTIFY_GAME_FINISH_REWARD(".lq.NotifyGameFinishReward"),
-    NOTIFY_ACTIVITY_REWARD(".lq.NotifyActivityReward"),
-    NOTIFY_LEADERBOARD_POINT(".lq.NotifyLeaderboardPoint"),
-    BROADCAST_IN_GAME(".lq.FastTest.broadcastInGame"),
-    NOTIFY_PLAYER_CONNECTION_STATE(".lq.NotifyPlayerConnectionState"),
-    PLAYER_LEAVING(".lq.PlayerLeaving"),
-    CLEAR_LEAVING(".lq.FastTest.clearLeaving");
+    TERMINATE_GAME(".lq.FastTest.terminateGame"),
+    ACTION_PROTOTYPE(".lq.ActionPrototype"),
+    NOTIFY_GAME_TERMINATE(".lq.NotifyGameTerminate"),
+    NOTIFY_GAME_END_RESULT(".lq.NotifyGameEndResult"),
+    NOTIFY_GAME_BROADCAST(".lq.NotifyGameBroadcast");
     
     companion object {
         fun fromString(value: String): LiqiMethod? {

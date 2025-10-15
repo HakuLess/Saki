@@ -4,6 +4,9 @@
 
 基于 MahjongCopilot 项目，使用 Kotlin Multiplatform (KMP) 技术栈开发 Windows 客户端，实现智能麻将助手功能，支持自动打牌。
 
+## 项目运行
+在 compose-mpp 文件夹下运行  .\gradlew.bat :desktopApp:run
+
 ## 技术栈选择
 
 ### 核心技术
@@ -18,51 +21,69 @@
 - **Windows API**: 系统级操作
 - **Win32 API**: 窗口管理和输入模拟
 - **Windows Runtime**: 现代 Windows API
+- **mitmproxy**: 网络包捕获和拦截
+- **JNA**: Java Native Access 用于调用 Windows API
 
 ## 项目架构设计
 
 ### 1. 整体架构
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Windows Client                        │
-├─────────────────────────────────────────────────────────┤
-│  UI Layer (Compose Multiplatform)                       │
-│  ├── Main Window                                        │
-│  ├── Settings Window                                    │
-│  ├── Game Overlay                                       │
-│  └── Status Display                                     │
-├─────────────────────────────────────────────────────────┤
-│  Business Logic Layer                                   │
-│  ├── Game Manager                                       │
-│  ├── AI Decision Engine                                 │
-│  ├── Automation Controller                              │
-│  └── Settings Manager                                   │
-├─────────────────────────────────────────────────────────┤
-│  Data Layer                                             │
-│  ├── Network Interceptor                                │
-│  ├── Protocol Parser                                    │
-│  ├── Game State Manager                                 │
-│  └── AI Model Interface                                 │
-├─────────────────────────────────────────────────────────┤
-│  Platform Layer (Windows)                              │
-│  ├── Win32 API Wrapper                                 │
-│  ├── Process Injection                                  │
-│  ├── Window Management                                  │
-│  └── Input Simulation                                   │
-└─────────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    A[Windows Client] --> B[UI Layer]
+    A --> C[Business Logic Layer]
+    A --> D[Data Layer]
+    A --> E[Platform Layer]
+    
+    B --> B1[Main Window]
+    B --> B2[Settings Window]
+    B --> B3[Game Overlay]
+    B --> B4[Status Display]
+    
+    C --> C1[Game Manager]
+    C --> C2[AI Decision Engine]
+    C --> C3[Automation Controller]
+    C --> C4[Settings Manager]
+    
+    D --> D1[Network Interceptor]
+    D --> D2[Protocol Parser]
+    D --> D3[Game State Manager]
+    D --> D4[AI Model Interface]
+    
+    E --> E1[Win32 API Wrapper]
+    E --> E2[Process Injection]
+    E --> E3[Window Management]
+    E --> E4[Input Simulation]
+    E --> E5[MITM Network Capture]
 ```
 
 ### 2. 模块结构
-```
-kmp-mahjong-copilot/
-├── shared/                          # 共享代码模块
-│   ├── common/                      # 公共工具
-│   ├── data/                        # 数据层
-│   ├── domain/                      # 业务逻辑
-│   └── presentation/                # 表现层
-├── desktopApp/                      # Windows 桌面应用
-├── androidApp/                      # Android 应用（可选）
-└── iosApp/                          # iOS 应用（可选）
+```mermaid
+graph TD
+    A[kmp-mahjong-copilot/] --> B[shared/]
+    A --> C[desktopApp/]
+    A --> D[androidApp/]
+    A --> E[iosApp/]
+    
+    B --> B1[common/]
+    B --> B2[data/]
+    B --> B3[domain/]
+    B --> B4[presentation/]
+    B --> B5[platform/]
+    
+    B1 --> B1a[utils]
+    B1 --> B1b[constants]
+    
+    B2 --> B2a[model]
+    B2 --> B2b[repository]
+    
+    B3 --> B3a[service]
+    B3 --> B3b[impl]
+    
+    B4 --> B4a[components]
+    B4 --> B4b[screens]
+    
+    B5 --> B5a[windows]
+    B5 --> B5b[common]
 ```
 
 ## 详细工作步骤
@@ -70,73 +91,77 @@ kmp-mahjong-copilot/
 ### 阶段 1: 项目初始化 (1-2 天)
 
 #### 1.1 创建 KMP 项目结构
-- [ ] 使用 IntelliJ IDEA 创建新的 KMP 项目
-- [ ] 配置 Gradle 构建脚本
-- [ ] 设置模块依赖关系
-- [ ] 配置 Compose Multiplatform
+- [x] 使用 IntelliJ IDEA 创建新的 KMP 项目
+- [x] 配置 Gradle 构建脚本
+- [x] 设置模块依赖关系
+- [x] 配置 Compose Multiplatform
 
 #### 1.2 基础依赖配置
-- [ ] 添加 Ktor 客户端依赖
-- [ ] 配置 Kotlinx Serialization
-- [ ] 添加 Coroutines 支持
-- [ ] 配置 SQLDelight（如需要）
+- [x] 添加 Ktor 客户端依赖
+- [x] 配置 Kotlinx Serialization
+- [x] 添加 Coroutines 支持
+- [x] 配置 SQLDelight（如需要）
+- [x] 添加 Windows 平台特定依赖（JNA等）
 
 #### 1.3 项目结构设置
-- [ ] 创建共享模块结构
-- [ ] 设置桌面应用模块
-- [ ] 配置资源文件管理
-- [ ] 设置日志系统
+- [x] 创建共享模块结构
+- [x] 设置桌面应用模块
+- [x] 配置资源文件管理
+- [x] 设置日志系统
 
 ### 阶段 2: 核心功能实现 (3-4 天)
 
 #### 2.1 网络拦截模块
-- [ ] 实现 Windows 网络拦截器
+- [x] 设计网络拦截器接口
+- [x] 实现基于mitmproxy的网络拦截器
 - [ ] 创建 MITM 代理功能
 - [ ] 实现 WebSocket 消息捕获
 - [ ] 添加进程注入支持
 
 #### 2.2 协议解析模块
-- [ ] 实现 Liqi 协议解析器
-- [ ] 创建 MJAI 协议转换器
+- [x] 实现 Liqi 协议解析器
+- [x] 创建 MJAI 协议转换器
 - [ ] 添加消息队列管理
 - [ ] 实现协议版本兼容性
 
 #### 2.3 游戏状态管理
-- [ ] 创建游戏状态数据结构
-- [ ] 实现状态同步机制
+- [x] 创建游戏状态数据结构
+- [x] 实现状态同步机制
 - [ ] 添加游戏事件处理
 - [ ] 实现状态持久化
 
 ### 阶段 3: AI 集成 (2-3 天)
 
 #### 3.1 AI 模型接口
-- [ ] 设计 AI 模型抽象接口
-- [ ] 实现本地模型集成
-- [ ] 添加在线模型支持
-- [ ] 创建模型切换机制
+- [x] 设计 AI 模型抽象接口
+- [x] 实现本地模型集成
+- [x] 添加在线模型支持
+- [x] 创建模型切换机制
 
 #### 3.2 决策引擎
-- [ ] 实现 MJAI 决策逻辑
+- [x] 实现 MJAI 决策逻辑
 - [ ] 创建动作优先级系统
 - [ ] 添加风险评估功能
 - [ ] 实现决策缓存机制
 
 #### 3.3 模型管理
-- [ ] 实现模型加载和卸载
+- [x] 实现模型加载和卸载
 - [ ] 添加模型性能监控
-- [ ] 创建模型配置管理
+- [x] 创建模型配置管理
 - [ ] 实现模型更新机制
 
 ### 阶段 4: 自动化功能 (2-3 天)
 
 #### 4.1 输入模拟
-- [ ] 实现 Windows 输入模拟
+- [x] 设计输入模拟接口
+- [ ] 实现 Windows 输入模拟（进行中）
 - [ ] 创建鼠标点击模拟
 - [ ] 添加键盘输入模拟
 - [ ] 实现精确坐标定位
 
 #### 4.2 游戏操作自动化
-- [ ] 实现自动打牌功能
+- [x] 设计自动化服务接口
+- [ ] 实现 Windows 自动化服务（进行中）
 - [ ] 创建自动吃碰杠逻辑
 - [ ] 添加自动立直功能
 - [ ] 实现自动和牌检测
@@ -150,16 +175,16 @@ kmp-mahjong-copilot/
 ### 阶段 5: 用户界面开发 (3-4 天)
 
 #### 5.1 主界面设计
-- [ ] 创建主窗口布局
-- [ ] 实现状态显示面板
-- [ ] 添加控制按钮组
-- [ ] 创建日志显示区域
+- [x] 创建主窗口布局
+- [x] 实现状态显示面板
+- [x] 添加控制按钮组
+- [x] 创建日志显示区域
 
 #### 5.2 设置界面
-- [ ] 实现设置窗口
-- [ ] 添加模型配置选项
+- [x] 实现设置窗口
+- [x] 添加模型配置选项
 - [ ] 创建网络设置面板
-- [ ] 实现自动化设置
+- [x] 实现自动化设置
 
 #### 5.3 游戏覆盖显示
 - [ ] 实现游戏内覆盖窗口
@@ -168,10 +193,10 @@ kmp-mahjong-copilot/
 - [ ] 实现透明度控制
 
 #### 5.4 状态监控界面
-- [ ] 创建实时状态显示
+- [x] 创建实时状态显示
 - [ ] 添加性能监控面板
-- [ ] 实现错误信息显示
-- [ ] 创建操作历史记录
+- [x] 实现错误信息显示
+- [x] 创建操作历史记录
 
 ### 阶段 6: 系统集成 (2-3 天)
 
@@ -188,9 +213,9 @@ kmp-mahjong-copilot/
 - [ ] 实现异常恢复
 
 #### 6.3 配置管理
-- [ ] 实现配置文件管理
+- [x] 实现配置文件管理
 - [ ] 添加设置导入导出
-- [ ] 创建配置验证
+- [x] 创建配置验证
 - [ ] 实现配置备份
 
 ### 阶段 7: 测试和优化 (2-3 天)
@@ -217,8 +242,8 @@ kmp-mahjong-copilot/
 
 ### 1. 网络拦截实现
 ```kotlin
-// Windows 网络拦截器
-class WindowsNetworkInterceptor {
+// 基于mitmproxy的网络拦截器
+class MitmNetworkInterceptor {
     fun startInterception(port: Int)
     fun stopInterception()
     fun captureWebSocketMessages(): Flow<WebSocketMessage>
@@ -297,6 +322,7 @@ class GameAutomation {
 - **Windows 10/11**: 目标平台
 - **JDK 17+**: Kotlin 编译环境
 - **Visual C++ Redistributable**: Windows API 支持
+- **mitmproxy**: 网络包捕获支持
 
 ### 依赖库
 - **Kotlin**: 1.9.0+
@@ -304,6 +330,8 @@ class GameAutomation {
 - **Ktor**: 2.3.0+
 - **Kotlinx Serialization**: 1.5.0+
 - **Coroutines**: 1.7.0+
+- **JNA**: 5.13.0+
+- **mitmproxy**: 9.0.0+
 
 ## 风险评估和缓解
 
@@ -326,23 +354,28 @@ class GameAutomation {
 
 ## 项目里程碑
 
-### 里程碑 1: 基础框架 (第 1 周)
+### 里程碑 1: 基础框架 (已完成)
 - 完成项目初始化和基础架构
-- 实现基本的网络拦截功能
+- 实现基于mitmproxy的网络拦截功能
 - 完成协议解析基础框架
 
-### 里程碑 2: 核心功能 (第 2 周)
+### 里程碑 2: 核心功能 (进行中)
 - 完成游戏状态管理
 - 实现 AI 模型集成
 - 完成基本的自动化功能
 
-### 里程碑 3: 用户界面 (第 3 周)
-- 完成主界面开发
+### 里程碑 3: Windows平台实现 (计划中)
+- 完成Windows网络拦截真实实现
+- 实现Windows输入模拟
+- 完成游戏自动化功能
+
+### 里程碑 4: 用户界面完善 (计划中)
+- 完善主界面功能
 - 实现设置和配置功能
 - 完成游戏覆盖显示
 
-### 里程碑 4: 系统集成 (第 4 周)
-- 完成 Windows 系统集成
+### 里程碑 5: 系统集成和测试 (计划中)
+- 完成Windows系统集成
 - 实现完整的自动化流程
 - 完成测试和优化
 
@@ -361,3 +394,5 @@ class GameAutomation {
 ## 总结
 
 这个 KMP MahjongCopilot Windows 客户端项目将结合现代 Kotlin 技术栈和 MahjongCopilot 的核心功能，提供一个功能完整、用户友好的智能麻将助手。通过分阶段开发和迭代优化，确保项目的稳定性和可维护性。
+
+Windows平台的实现重点关注真实的网络拦截和输入模拟功能，这将使Saki项目相比原版MahjongCopilot具有更强的实用性和兼容性。使用mitmproxy实现网络拦截与MahjongCopilot保持一致，确保了技术方案的成熟性和可靠性。

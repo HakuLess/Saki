@@ -61,7 +61,7 @@ class ProtocolParserRepositoryImpl : ProtocolParserRepository {
                     type = MjaiMessageType.START_GAME,
                     id = liqiMessage.id
                 )
-                LiqiMethod.INPUT_OPERATION -> {
+                LiqiMethod.ACTION_PROTOTYPE -> {
                     val operation = liqiMessage.data["operation"] as? String
                     when (operation) {
                         "discard" -> MjaiMessage(
