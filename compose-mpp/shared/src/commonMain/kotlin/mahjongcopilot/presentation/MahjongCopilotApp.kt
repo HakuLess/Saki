@@ -192,6 +192,9 @@ fun MahjongCopilotApp() {
         // 游戏信息面板
         GameInfoPanel(gameState = appState.currentGame)
         
+        // 手牌面板
+        HandPanel(gameState = appState.currentGame)
+        
         // AI 决策面板
         AiDecisionPanel(decision = appState.lastDecision)
         

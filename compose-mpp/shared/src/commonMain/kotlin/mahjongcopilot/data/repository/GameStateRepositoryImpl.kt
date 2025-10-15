@@ -60,7 +60,7 @@ class GameStateRepositoryImpl : GameStateRepository {
         
         return when (message.method) {
             LiqiMethod.AUTH_GAME -> {
-                // 游戏开始
+                // 游戏开始，返回初始游戏状态，但标记为活动状态
                 current.copy(
                     gameId = message.data["gameId"]?.toString() ?: "mock_game_${System.currentTimeMillis()}",
                     isGameActive = true
@@ -92,12 +92,29 @@ class GameStateRepositoryImpl : GameStateRepository {
      * 创建初始游戏状态
      */
     private fun createInitialGameState(): GameState {
+        // 创建模拟手牌
+        val sampleHand = listOf(
+            Tile(TileType.MAN_1), Tile(TileType.MAN_2), Tile(TileType.MAN_3),
+            Tile(TileType.MAN_5), Tile(TileType.MAN_7), Tile(TileType.MAN_9),
+            Tile(TileType.PIN_2), Tile(TileType.PIN_5, isRed = true), Tile(TileType.PIN_6),
+            Tile(TileType.SOU_3), Tile(TileType.SOU_4), Tile(TileType.SOU_8),
+            Tile(TileType.EAST), Tile(TileType.SOUTH)
+        )
+        
+        // 创建模拟面子
+        val sampleMelds = listOf(
+            Meld(
+                type = MeldType.PON,
+                tiles = listOf(Tile(TileType.WHITE), Tile(TileType.WHITE), Tile(TileType.WHITE))
+            )
+        )
+        
         val players = listOf(
             Player(
                 seat = PlayerSeat.EAST,
                 name = "玩家1",
-                hand = emptyList(),
-                melds = emptyList(),
+                hand = sampleHand,
+                melds = sampleMelds,
                 isDealer = true
             ),
             Player(
@@ -128,9 +145,9 @@ class GameStateRepositoryImpl : GameStateRepository {
             currentKyoku = 1,
             currentHonba = 0,
             currentBakaze = TileType.EAST,
-            doraMarkers = emptyList(),
+            doraMarkers = listOf(Tile(TileType.SOUTH)),
             scores = listOf(25000, 25000, 25000, 25000),
-            isGameActive = false
+            isGameActive = true
         )
     }
     

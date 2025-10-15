@@ -75,9 +75,21 @@ class NetworkInterceptorRepositoryImpl : NetworkInterceptorRepository {
      * 在实际实现中，这里会使用平台特定的网络拦截技术
      */
     private suspend fun startMockInterception() {
+        // 首先发送一个游戏开始消息
+        val startGameMessage = LiqiMessage(
+            id = 1,
+            type = LiqiMessageType.RES,
+            method = LiqiMethod.AUTH_GAME,
+            data = mapOf(
+                "gameId" to "mock_game_${System.currentTimeMillis()}",
+                "timestamp" to System.currentTimeMillis()
+            )
+        )
+        _messages.emit(startGameMessage)
+        
         // 模拟接收网络消息
         while (isActive) {
-            delay(2000) // 每2秒模拟一个消息
+            delay(5000) // 每5秒模拟一个消息
             
             if (isActive) {
                 val mockMessage = createMockLiqiMessage()
