@@ -28,6 +28,9 @@ fun MahjongCopilotApp() {
     val networkManager = remember { 
         NetworkManagerServiceImpl(networkInterceptor) 
     }
+    val aiDecisionService = remember { AiDecisionServiceImpl() }
+    val aiModelService = remember { AiModelServiceImpl() }
+    val automationService = remember { AutomationServiceImpl() }
     
     // 状态管理
     var appState by remember { mutableStateOf(AppState()) }
@@ -36,10 +39,43 @@ fun MahjongCopilotApp() {
     
     val scope = rememberCoroutineScope()
     
+    // 初始化 AI 模型
+    LaunchedEffect(aiModelService) {
+        aiModelService.initializeModels()
+    }
+    
     // 监听应用状态变化
     LaunchedEffect(gameManager) {
         gameManager.observeAppState().collect { state ->
             appState = state
+        }
+    }
+    
+    // 监听游戏状态变化，自动获取 AI 决策
+    LaunchedEffect(gameManager) {
+        gameManager.observeGameState().collect { gameState ->
+            if (gameState != null && gameState.isGameActive) {
+                scope.launch {
+                    val result = aiDecisionService.getDecision(gameState)
+                    if (result.isSuccess) {
+                        val decision = result.getOrNull()
+                        if (decision != null) {
+                            appState = appState.copy(lastDecision = decision)
+                            
+                            // 如果启用了自动化，执行自动动作
+                            if (settings.automationSettings.autoDiscard) {
+                                automationService.executeAutomaticAction(decision)
+                            }
+                            
+                            logs = logs + LogEntry(
+                                timestamp = System.currentTimeMillis(),
+                                level = LogLevel.INFO,
+                                message = "AI 决策: ${decision.reasoning}"
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
     
@@ -77,8 +113,16 @@ fun MahjongCopilotApp() {
             onSettingsChange = { settings = it },
             onStartGame = { 
                 scope.launch {
+                    // 启动游戏管理器
                     val result = gameManager.startGameManager()
                     if (result.isSuccess) {
+                        // 加载 AI 模型
+                        val models = aiModelService.getAvailableModels()
+                        val defaultModel = models.firstOrNull { it.isEnabled }
+                        if (defaultModel != null) {
+                            aiDecisionService.loadModel(defaultModel)
+                        }
+                        
                         logs = logs + LogEntry(
                             timestamp = System.currentTimeMillis(),
                             level = LogLevel.INFO,
@@ -95,6 +139,13 @@ fun MahjongCopilotApp() {
             },
             onStopGame = { 
                 scope.launch {
+                    // 停止自动化
+                    automationService.disableAutomation()
+                    
+                    // 卸载 AI 模型
+                    aiDecisionService.unloadModel()
+                    
+                    // 停止游戏管理器
                     val result = gameManager.stopGameManager()
                     if (result.isSuccess) {
                         logs = logs + LogEntry(
@@ -107,6 +158,31 @@ fun MahjongCopilotApp() {
                             timestamp = System.currentTimeMillis(),
                             level = LogLevel.ERROR,
                             message = "Failed to stop game manager: ${result.exceptionOrNull()?.message}"
+                        )
+                    }
+                }
+            },
+            onToggleAutomation = { enabled ->
+                scope.launch {
+                    if (enabled) {
+                        automationService.enableAutomation()
+                        settings = settings.copy(
+                            automationSettings = settings.automationSettings.copy(autoDiscard = true)
+                        )
+                        logs = logs + LogEntry(
+                            timestamp = System.currentTimeMillis(),
+                            level = LogLevel.INFO,
+                            message = "Automation enabled"
+                        )
+                    } else {
+                        automationService.disableAutomation()
+                        settings = settings.copy(
+                            automationSettings = settings.automationSettings.copy(autoDiscard = false)
+                        )
+                        logs = logs + LogEntry(
+                            timestamp = System.currentTimeMillis(),
+                            level = LogLevel.INFO,
+                            message = "Automation disabled"
                         )
                     }
                 }
@@ -193,7 +269,8 @@ fun ControlPanel(
     settings: GameSettings,
     onSettingsChange: (GameSettings) -> Unit,
     onStartGame: () -> Unit,
-    onStopGame: () -> Unit
+    onStopGame: () -> Unit,
+    onToggleAutomation: (Boolean) -> Unit = {}
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()
@@ -226,6 +303,28 @@ fun ControlPanel(
                     modifier = Modifier.weight(1f)
                 ) {
                     Text("停止游戏")
+                }
+            }
+            
+            // 自动化控制
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = { onToggleAutomation(true) },
+                    enabled = appState.isInGame && !settings.automationSettings.autoDiscard,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("启用自动打牌")
+                }
+                
+                Button(
+                    onClick = { onToggleAutomation(false) },
+                    enabled = appState.isInGame && settings.automationSettings.autoDiscard,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("禁用自动打牌")
                 }
             }
             

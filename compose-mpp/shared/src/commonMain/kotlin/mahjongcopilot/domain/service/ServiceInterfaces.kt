@@ -49,17 +49,92 @@ interface AiDecisionService {
     /**
      * 验证决策
      */
-    suspend fun validateDecision(decision: AiDecision, gameState: GameState): Boolean
+    suspend fun validateDecision(decision: AiDecision, gameState: GameState): Result<Boolean>
     
     /**
-     * 获取决策历史
+     * 加载 AI 模型
      */
-    suspend fun getDecisionHistory(): List<AiDecision>
+    suspend fun loadModel(modelConfig: AiModelConfig): Result<Unit>
+    
+    /**
+     * 卸载 AI 模型
+     */
+    suspend fun unloadModel(): Result<Unit>
+    
+    /**
+     * 检查模型是否已加载
+     */
+    suspend fun isModelLoaded(): Boolean
+    
+    /**
+     * 获取模型信息
+     */
+    suspend fun getModelInfo(): AiModelConfig?
+    
+    /**
+     * 监听决策历史
+     */
+    fun observeDecisionHistory(): kotlinx.coroutines.flow.Flow<List<AiDecision>>
     
     /**
      * 清除决策历史
      */
     suspend fun clearDecisionHistory(): Result<Unit>
+}
+
+/**
+ * AI 模型管理服务接口
+ */
+interface AiModelService {
+    /**
+     * 初始化模型
+     */
+    suspend fun initializeModels(): Result<Unit>
+    
+    /**
+     * 获取可用模型列表
+     */
+    suspend fun getAvailableModels(): List<AiModelConfig>
+    
+    /**
+     * 加载模型
+     */
+    suspend fun loadModel(modelConfig: AiModelConfig): Result<Unit>
+    
+    /**
+     * 卸载模型
+     */
+    suspend fun unloadModel(): Result<Unit>
+    
+    /**
+     * 获取当前模型
+     */
+    suspend fun getCurrentModel(): AiModelConfig?
+    
+    /**
+     * 检查模型是否已加载
+     */
+    suspend fun isModelLoaded(): Boolean
+    
+    /**
+     * 更新模型配置
+     */
+    suspend fun updateModelConfig(modelConfig: AiModelConfig): Result<Unit>
+    
+    /**
+     * 测试模型连接
+     */
+    suspend fun testModelConnection(modelConfig: AiModelConfig): Result<Boolean>
+    
+    /**
+     * 监听可用模型变化
+     */
+    fun observeAvailableModels(): kotlinx.coroutines.flow.Flow<List<AiModelConfig>>
+    
+    /**
+     * 监听当前模型变化
+     */
+    fun observeCurrentModel(): kotlinx.coroutines.flow.Flow<AiModelConfig?>
 }
 
 /**
@@ -95,6 +170,36 @@ interface AutomationService {
      * 恢复自动化
      */
     suspend fun resumeAutomation(): Result<Unit>
+    
+    /**
+     * 更新自动化设置
+     */
+    suspend fun updateSettings(settings: AutomationSettings): Result<Unit>
+    
+    /**
+     * 获取自动化设置
+     */
+    suspend fun getSettings(): AutomationSettings
+    
+    /**
+     * 获取动作历史
+     */
+    suspend fun getActionHistory(): List<AutomationAction>
+    
+    /**
+     * 清除动作历史
+     */
+    suspend fun clearActionHistory(): Result<Unit>
+    
+    /**
+     * 监听自动化状态
+     */
+    fun observeAutomationState(): kotlinx.coroutines.flow.Flow<AutomationState>
+    
+    /**
+     * 监听动作历史
+     */
+    fun observeActionHistory(): kotlinx.coroutines.flow.Flow<List<AutomationAction>>
 }
 
 /**

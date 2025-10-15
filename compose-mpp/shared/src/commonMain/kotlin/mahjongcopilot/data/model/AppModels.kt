@@ -126,3 +126,24 @@ data class NetworkStatistics(
     val messagesSent: Int = 0,
     val errors: Int = 0
 )
+
+/**
+ * 自动化状态枚举
+ */
+enum class AutomationState {
+    DISABLED,
+    ENABLED,
+    PAUSED,
+    ERROR
+}
+
+/**
+ * 自动化动作记录
+ */
+data class AutomationAction(
+    val timestamp: Long,
+    val decision: AiDecision,
+    val success: Boolean,
+    val executionTime: Long,
+    val errorMessage: String? = null
+)
