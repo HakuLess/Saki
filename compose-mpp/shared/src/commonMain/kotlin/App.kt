@@ -1,7 +1,4 @@
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -12,30 +9,52 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
 
-@OptIn(ExperimentalResourceApi::class)
+import com.saki.mahjong.data.GameState
+import com.saki.mahjong.ui.GameStatusPanel
+import com.saki.mahjong.service.MahjongGameService
+
 @Composable
 fun App() {
     MaterialTheme {
-        var greetingText by remember { mutableStateOf("Hello, World!") }
-        var showImage by remember { mutableStateOf(false) }
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+
+        val mahjongService = remember { createMahjongService() }
+        var gameState by remember { mutableStateOf(GameState()) }
+        var isIntercepting by remember { mutableStateOf(false) }
+
+        // 初始化服务
+        remember {
+            object {
+                init {
+                    // 初始化麻将服务
+                    mahjongService.initialize { newState ->
+                        gameState = newState
+                    }
+                }
+            }
+        }
+
+        Column(modifier = Modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+            // 控制按钮
             Button(onClick = {
-                greetingText = "Hello, ${getPlatformName()}"
-                showImage = !showImage
+                if (isIntercepting) {
+                    mahjongService.stopNetworkInterceptor()
+                } else {
+                    mahjongService.startNetworkInterceptor()
+                }
+                isIntercepting = !isIntercepting
             }) {
-                Text(greetingText)
+                Text(if (isIntercepting) "停止拦截网络请求" else "开始拦截网络请求")
             }
-            AnimatedVisibility(showImage) {
-                Image(
-                    painterResource("compose-multiplatform.xml"),
-                    contentDescription = "Compose Multiplatform icon"
-                )
-            }
+
+            // 游戏状态面板
+            GameStatusPanel(gameState)
         }
     }
 }
 
+// 平台特定的服务创建函数
+expect fun createMahjongService(): MahjongGameService
+
+// 平台名称函数保留，供某些UI显示使用
 expect fun getPlatformName(): String
