@@ -12,6 +12,8 @@ kotlin {
             dependencies {
                 implementation(compose.desktop.currentOs)
                 implementation(project(":shared"))
+                // 添加Playwright依赖
+                implementation("com.microsoft.playwright:playwright:1.44.0")
             }
         }
     }
