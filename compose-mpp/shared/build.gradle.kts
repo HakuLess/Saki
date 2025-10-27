@@ -1,5 +1,6 @@
 plugins {
     kotlin("multiplatform")
+    kotlin("plugin.serialization") version "1.9.22"
     id("org.jetbrains.compose")
 }
 
@@ -16,6 +17,8 @@ kotlin {
                 implementation(compose.components.resources)
                 // Coroutines for async flow collection and UI events
                 implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.8.1")
+                // Kotlinx Serialization for JSON parsing
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
             }
         }
         val desktopMain by getting {

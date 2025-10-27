@@ -62,3 +62,11 @@ data class HandWon(
     val kind: String, // ron / tsumo
     override val timestamp: Long,
 ) : GameEvent
+
+// 新增：手牌更新事件
+data class HandTilesUpdated(
+    val playerId: Int,
+    val tiles: List<String>,
+    val fieldName: String, // 原始字段名，用于调试
+    override val timestamp: Long,
+) : GameEvent
